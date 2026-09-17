@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Start</title>
+	</head>
+	
+	<body>
+		
+	</body>
+	
+	<style>
+		body {
+			margin: 0; 
+			padding: 0; 
+			border: none; 
+			font-family: sans-serif;
+			background: #fff386;
+		}		
+	</style>
+	
+	<script src="/live.js"></script>
+	<script>
+
+		window.apps = [ ]
+		window.processNumber = 0
+		window.windows = [ ]
+		window.windowNumber = 0
+		
+		start()
+		
+		var photoViewer = startApp(photoViewer)
+		
+		async function photoViewer() {
+			var viewer = createWindow("Photo Viewer")
+			
+			var image = document.createElement("img")
+			image.src = "/sample-photo.jpg"
+			image.style.display = "block"
+			image.style.maxWidth = "300px"
+			
+			viewer.element.appendChild(image)
+			showWindow(viewer)
+		}
+		
+		var a = startApp(first)
+		
+		async function first() {
+			var location = "https://api.coinbase.com" +
+							"/v2/prices/xau-usd/spot"
+			var response = await fetch(location)
+			var text     = await response.text()
+			console.log(text)
+			
+			var main = createWindow("Sample")
+			// showWindow(main)
+			
+			var second = createWindow("Second")
+			
+			for (var i = 0; i < 10000; i++) {
+				second.element.innerHTML += i + " "
+			}
+		}
+		
+		
+		
+		async function start() {
+			console.log("Starting Operating System")
+			// create task bar
+		}
+		
+		function closeApp(a) {
+			var found = -1
+			for (var i = 0; i < window.apps.length; i++) {
+				if (a.identifier == window.apps[i].identifier) {
+					found = i
+				}
+			}
+			
+			if (found >= 0) {
+				a.resolve("EXIT_SUCCESS")
+				
+				// move app detail
+				for (var i = found; i < window.apps.length; i++) {
+					window.apps[i] = window.apps[i + 1]
+				}
+				
+				// delete the last element
+				window.apps.pop()
+			}
+		}
+		
+		function startApp(f) {
+			window.processNumber++
+			
+			var detail = { }
+			window.apps.push(detail)
+			detail.identifier = window.processNumber
+			detail.promise = new Promise( function(resolve, reject) {
+				detail.resolve = resolve
+				detail.reject  = reject
+				f()
+			})
+			
+			return detail
+		}
+		
+		function createWindow(text) {
+			window.windowNumber++
+			var detail = { }
+			detail.text = text
+			detail.maximize = true
+			detail.identifier = window.windowNumber
+			detail.element = document.createElement("section")
+			detail.element.style.background = "rgba(255, 255, 255, .85)"
+			detail.element.style.margin = ".6rem"
+			detail.element.style.width  = "calc(100dvw - 1.2rem - 4rem)"
+			detail.element.style.height = "calc(100dvh - 1.2rem - 4rem)"
+			// detail.element.style.height       = "15rem"
+			detail.element.style.borderRadius = "1rem"
+			detail.element.style.boxShadow = "0 0 .1rem #666"
+			detail.element.style.padding   = "2rem"
+			detail.element.style.color     = "#333"
+			detail.element.style.display   = "none"
+			detail.element.style.overflow  = "auto"
+			
+			detail.element.innerHTML = detail.text
+			
+			window.windows.push(detail)
+			document.body.appendChild(detail.element)
+			
+			return detail
+		}
+		
+		function showWindow(pane) {
+			var found = -1
+			for (var i = 0; i < window.windows.length; i++) {
+				if (pane.identfier = window.windows[i].identifier) {
+					found = i
+				}
+			}
+			
+			if (found >= 0) {
+				for (var i = 0; i < window.windows.length; i++) {
+					window.windows[i].element.style.display = "none"
+				}
+				pane.element.style.display = "block"
+			}
+		}
+		
+		
+	</script>
+</html>
