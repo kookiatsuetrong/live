@@ -15,7 +15,18 @@
 			border: none; 
 			font-family: sans-serif;
 			background: #fff386;
-		}		
+		}
+		a {
+			text-decoration: none;
+			color: #aaa;
+		}
+		a:visited {
+			color: #aaa;
+		}
+		a:hover {
+			color: #333;
+			cursor: pointer;
+		}
 	</style>
 	
 	<script src="/live.js"></script>
@@ -29,22 +40,24 @@
 		start()
 		
 		var photoViewer = startApp(photoViewer)
+		var empty = startApp(empty)
 		
 		async function photoViewer() {
 			var viewer = createWindow("Photo Viewer")
 			
 			var image = document.createElement("img")
 			image.src = "/sample-photo.jpg"
-			image.style.display = "block"
-			image.style.width = "100%"
-			
+			image.style.display   = "block"
+			image.style.overflow  = "hidden"
+			image.style.width     = "100%"
+			// image.style.objectFit = "cover"
+
 			viewer.element.appendChild(image)
-			showWindow(viewer)
+			// restoreWindow(viewer)
 		}
 		
-		var a = startApp(first)
 		
-		async function first() {
+		async function empty() {
 			var location = "https://api.coinbase.com" +
 							"/v2/prices/xau-usd/spot"
 			var response = await fetch(location)
@@ -52,17 +65,10 @@
 			console.log(text)
 			
 			var main = createWindow("Sample")
-			// showWindow(main)
-			
-			var second = createWindow("Second")
-			
-			for (var i = 0; i < 10000; i++) {
-				second.element.innerHTML += i + " "
-			}
 		}
-		
-		
-		
+
+
+
 		async function start() {
 			console.log("Starting Operating System")
 			// create task bar
@@ -104,35 +110,129 @@
 			return detail
 		}
 		
+		function getFrontWindow() {
+			var m = 0
+			for (var i = 0; i < window.windows.length; i++) {
+				if (m < window.windows[i].front) {
+					m = window.windows[i].front
+				}
+			}
+			return m
+		}
+		
 		function createWindow(text) {
 			window.windowNumber++
 			var detail = { }
 			detail.text = text
 			detail.maximize = true
 			detail.identifier = window.windowNumber
+			detail.width  = "640px"
+			detail.height = "480px"
+			detail.top    = 40 * window.windowNumber + "px"
+			detail.left   = 40 * window.windowNumber + "px"
+			detail.front  = 1 + getFrontWindow()
+			
 			detail.element = document.createElement("section")
+			detail.element.classList.add("window")
+			
+			detail.element.style.position   = "absolute"
 			detail.element.style.background = "rgba(255, 255, 255, .85)"
-			detail.element.style.margin = ".6rem"
-			// detail.element.style.width  = "calc(100dvw - 1.2rem - 4rem)"
-			detail.element.style.width  = "20rem"
-			detail.element.style.height = "calc(100dvh - 1.2rem - 4rem)"
-			// detail.element.style.height       = "15rem"
 			detail.element.style.borderRadius = "1rem"
-			detail.element.style.boxShadow = "0 0 .1rem #666"
+			detail.element.style.boxShadow = "0 0 0.075rem #000"
 			detail.element.style.padding   = "1rem"
 			detail.element.style.color     = "#333"
-			detail.element.style.display   = "none"
+			detail.element.style.display   = "block"
 			detail.element.style.overflow  = "auto"
 			
+			detail.element.style.zIndex = detail.front
+			detail.element.style.top    = detail.top
+			detail.element.style.left   = detail.left
+			detail.element.style.width  = detail.width
+			detail.element.style.height = detail.height
+			
 			detail.element.innerHTML = detail.text
+			
+			var maximizeButton = document.createElement("img")
+			maximizeButton.addEventListener("click", 
+										e => enlargeWindow(detail))
+			maximizeButton.src = "/icons/up.svg"
+			maximizeButton.style.margin = "-0.75rem -.75rem 0 0.5rem"
+			maximizeButton.style.float  = "right"
+			detail.element.appendChild(maximizeButton)
+			
+			var restoreButton = document.createElement("img")
+			restoreButton.addEventListener("click", 
+										e => restoreWindow(detail))
+			restoreButton.src = "/icons/down.svg"
+			restoreButton.style.margin = "-0.75rem 0 0 0.5rem"
+			restoreButton.style.float  = "right"
+			detail.element.appendChild(restoreButton)
+		
+			var activateButton = document.createElement("img")
+			activateButton.addEventListener("click", 
+										e => activateWindow(detail))
+			activateButton.src = "/icons/check.svg"
+			activateButton.style.margin = "-0.75rem 0 0 0.5rem"
+			activateButton.style.float  = "right"
+			detail.element.appendChild(activateButton)
+			
+			var moveButton = document.createElement("img")
+			moveButton.addEventListener("mousedown", 
+										e => startMoveWindow(e, detail))
+			moveButton.src = "/icons/move.svg"
+			moveButton.style.margin = "-0.75rem 0 0 0.5rem"
+			moveButton.style.float  = "right"
+			detail.element.appendChild(moveButton)
 			
 			window.windows.push(detail)
 			document.body.appendChild(detail.element)
 			
+			var bounding = detail.element.getBoundingClientRect()
+			detail.width  = bounding.width  + "px"
+			detail.height = bounding.height + "px"
+			
+			restoreWindow(detail)
+			
 			return detail
 		}
 		
-		function showWindow(pane) {
+		window.addEventListener("mousemove", 
+									e => continueMoveWindow(e))
+		window.addEventListener("mouseup",
+									e => finishMoveWindow(e))
+		
+		function startMoveWindow(event, pane) {
+			window.moving  = pane
+			window.movingX = event.clientX
+			window.movingY = event.clientY
+			
+			var bound = pane.element.getBoundingClientRect()
+			window.startX  = bound.x
+			window.startY  = bound.y
+			
+			event.preventDefault()
+		}
+		
+		function finishMoveWindow(event) {
+			window.moving = null
+			event.preventDefault()
+		}
+		
+		function continueMoveWindow(event) {
+			
+			if (window.moving == null) { }
+			if (window.moving != null) {
+				var x = (event.clientX - window.movingX + window.startX)
+				var y = (event.clientY - window.movingY + window.startY)				
+				window.moving.element.style.top  = y + "px"
+				window.moving.element.style.left = x + "px"
+				event.preventDefault()
+			}
+		}
+		
+		
+		// bring the given window to front
+		function activateWindow(pane) {
 			var found = -1
 			for (var i = 0; i < window.windows.length; i++) {
 				if (pane.identfier = window.windows[i].identifier) {
@@ -141,11 +241,25 @@
 			}
 			
 			if (found >= 0) {
-				for (var i = 0; i < window.windows.length; i++) {
-					window.windows[i].element.style.display = "none"
-				}
-				pane.element.style.display = "block"
+				pane.front = 1 + getFrontWindow()
+				pane.element.style.zIndex = pane.front
+				
 			}
+		}
+		
+		function enlargeWindow(pane) {
+			pane.element.style.top    = "16px"
+			pane.element.style.left   = "16px"
+			pane.element.style.width  = "calc(100dvw - 1.2rem - 3rem)"
+			pane.element.style.height = "calc(100dvh - 1.2rem - 3rem)"
+			// pane.element.style.margin = "1rem"
+		}
+		
+		function restoreWindow(pane) {
+			pane.element.style.top    = pane.top
+			pane.element.style.left   = pane.left
+			pane.element.style.width  = pane.width
+			pane.element.style.height = pane.height
 		}
 		
 		
