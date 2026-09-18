@@ -36,7 +36,7 @@
 			var image = document.createElement("img")
 			image.src = "/sample-photo.jpg"
 			image.style.display = "block"
-			image.style.maxWidth = "300px"
+			image.style.width = "100%"
 			
 			viewer.element.appendChild(image)
 			showWindow(viewer)
@@ -113,12 +113,13 @@
 			detail.element = document.createElement("section")
 			detail.element.style.background = "rgba(255, 255, 255, .85)"
 			detail.element.style.margin = ".6rem"
-			detail.element.style.width  = "calc(100dvw - 1.2rem - 4rem)"
+			// detail.element.style.width  = "calc(100dvw - 1.2rem - 4rem)"
+			detail.element.style.width  = "20rem"
 			detail.element.style.height = "calc(100dvh - 1.2rem - 4rem)"
 			// detail.element.style.height       = "15rem"
 			detail.element.style.borderRadius = "1rem"
 			detail.element.style.boxShadow = "0 0 .1rem #666"
-			detail.element.style.padding   = "2rem"
+			detail.element.style.padding   = "1rem"
 			detail.element.style.color     = "#333"
 			detail.element.style.display   = "none"
 			detail.element.style.overflow  = "auto"
