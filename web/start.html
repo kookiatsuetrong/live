@@ -14,7 +14,13 @@
 			padding: 0; 
 			border: none; 
 			font-family: sans-serif;
-			background: #fff386;
+			background-color: #fff386;
+			
+			min-height: 100dvh;
+			background: linear-gradient(45deg, 
+					rgba(20%, 30%, 100%, 1), 
+					rgba( 0%,100%, 70%,  .9))
+					;
 		}
 		a {
 			text-decoration: none;
@@ -72,21 +78,6 @@
 			window.addEventListener("mousedown", e => {
 				console.log("mousedown")
 				console.log(e)
-			})
-			*/
-
-			/*
-			window.addEventListener("touchstart", e => {
-				console.log("touchstart")
-				console.log(e.touches)
-			})
-			window.addEventListener("touchmove", e => {
-				console.log("touchmove")
-				console.log(e.touches)
-			})
-			window.addEventListener("touchend", e => {
-				console.log("touchend")
-				console.log(e.touches)
 			})
 			*/
 
@@ -164,9 +155,10 @@
 			detail.element.style.position   = "absolute"
 			// detail.element.style.background = "rgba(255, 255, 255, .05)"
 			detail.element.style.background = "none"
-			detail.element.style.borderRadius = "1rem"
+			detail.element.style.borderRadius = "1.5rem"
 			detail.element.style.border = ".5rem solid rgba(0, 0, 0, .05)"
-			detail.element.style.boxShadow = "0 0 .1rem #000"
+			detail.element.style.boxShadow = "0 0 .1rem #000" +
+									", 0 0 2rem rgba(255, 255, 255, .8)"
 			detail.element.style.color     = "#333"
 			detail.element.style.display   = "block"
 			detail.element.style.overflow  = "auto"
@@ -193,7 +185,7 @@
 			maximizeButton.addEventListener("click", 
 										e => Screen.enlargeWindow(detail))
 			maximizeButton.src = "/icons/up.svg"
-			maximizeButton.style.margin = "-0.2rem .5rem 0 0.5rem"
+			maximizeButton.style.margin = "-0.2rem .5rem 0 1rem"
 			maximizeButton.style.float  = "right"
 			bar.appendChild(maximizeButton)
 			
@@ -201,7 +193,7 @@
 			restoreButton.addEventListener("click", 
 										e => Screen.restoreWindow(detail))
 			restoreButton.src = "/icons/down.svg"
-			restoreButton.style.margin = "-0.2rem 0 0 0.5rem"
+			restoreButton.style.margin = "-0.2rem 0 0 1rem"
 			restoreButton.style.float  = "right"
 			bar.appendChild(restoreButton)
 		
@@ -209,7 +201,7 @@
 			activateButton.addEventListener("click", 
 										e => Screen.activateWindow(detail))
 			activateButton.src = "/icons/check.svg"
-			activateButton.style.margin = "-0.2rem 0 0 0.5rem"
+			activateButton.style.margin = "-0.2rem 0 0 1rem"
 			activateButton.style.float  = "right"
 			bar.appendChild(activateButton)
 			
@@ -222,7 +214,7 @@
 								e => Screen.startFingerMoveWindow(e, detail))
 			
 			moveButton.src = "/icons/move.svg"
-			moveButton.style.margin = "-0.2rem 0 0 0.5rem"
+			moveButton.style.margin = "-0.2rem 0 0 1rem"
 			moveButton.style.float  = "right"
 			bar.appendChild(moveButton)
 			
