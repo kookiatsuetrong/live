@@ -43,6 +43,13 @@
 		var empty = startApp(empty)
 		
 		async function photoViewer() {
+			
+			var location = "https://api.coinbase.com" +
+							"/v2/prices/xau-usd/spot"
+			var response = await fetch(location)
+			var text     = await response.text()
+			console.log(text)
+			
 			var viewer = createWindow("Photo Viewer")
 			
 			var image = document.createElement("img")
@@ -50,28 +57,30 @@
 			image.style.display   = "block"
 			image.style.overflow  = "hidden"
 			image.style.width     = "100%"
-			// image.style.objectFit = "cover"
 
 			viewer.element.appendChild(image)
-			// restoreWindow(viewer)
 		}
 		
-		
-		async function empty() {
-			var location = "https://api.coinbase.com" +
-							"/v2/prices/xau-usd/spot"
-			var response = await fetch(location)
-			var text     = await response.text()
-			console.log(text)
-			
+		function empty() {
 			var main = createWindow("Sample")
 		}
-
-
+		
+		// mousedown     mousemove     mouseup
+		// touchstart    touchmove     touchend
+		// pointerdown   pointermove   pointerup
 
 		async function start() {
 			console.log("Starting Operating System")
-			// create task bar
+
+			window.addEventListener("touchstart", e => {
+				console.log("touchstart")
+				console.log(e.touches)
+			})
+
+			window.addEventListener("pointerdown", e => {
+				console.log("pointerdown")
+				console.log(e)
+			})
 		}
 		
 		function closeApp(a) {
@@ -92,6 +101,8 @@
 				
 				// delete the last element
 				window.apps.pop()
+				
+				// TODO: remove all windows from this app
 			}
 		}
 		
@@ -126,10 +137,12 @@
 			detail.text = text
 			detail.maximize = true
 			detail.identifier = window.windowNumber
-			detail.width  = "640px"
-			detail.height = "480px"
+			
 			detail.top    = 40 * window.windowNumber + "px"
 			detail.left   = 40 * window.windowNumber + "px"
+			detail.width  = "640px"
+			detail.height = "480px"
+
 			detail.front  = 1 + getFrontWindow()
 			
 			detail.element = document.createElement("section")
@@ -138,8 +151,8 @@
 			detail.element.style.position   = "absolute"
 			detail.element.style.background = "rgba(255, 255, 255, .85)"
 			detail.element.style.borderRadius = "1rem"
+			detail.element.style.border = ".5rem solid rgba(0, 0, 0, .05)"
 			detail.element.style.boxShadow = "0 0 0.075rem #000"
-			detail.element.style.padding   = "1rem"
 			detail.element.style.color     = "#333"
 			detail.element.style.display   = "block"
 			detail.element.style.overflow  = "auto"
@@ -150,13 +163,11 @@
 			detail.element.style.width  = detail.width
 			detail.element.style.height = detail.height
 			
-			detail.element.innerHTML = detail.text
-			
 			var maximizeButton = document.createElement("img")
 			maximizeButton.addEventListener("click", 
 										e => enlargeWindow(detail))
 			maximizeButton.src = "/icons/up.svg"
-			maximizeButton.style.margin = "-0.75rem -.75rem 0 0.5rem"
+			maximizeButton.style.margin = "0rem 0 0 0.5rem"
 			maximizeButton.style.float  = "right"
 			detail.element.appendChild(maximizeButton)
 			
@@ -164,7 +175,7 @@
 			restoreButton.addEventListener("click", 
 										e => restoreWindow(detail))
 			restoreButton.src = "/icons/down.svg"
-			restoreButton.style.margin = "-0.75rem 0 0 0.5rem"
+			restoreButton.style.margin = "0rem 0 0 0.5rem"
 			restoreButton.style.float  = "right"
 			detail.element.appendChild(restoreButton)
 		
@@ -172,7 +183,7 @@
 			activateButton.addEventListener("click", 
 										e => activateWindow(detail))
 			activateButton.src = "/icons/check.svg"
-			activateButton.style.margin = "-0.75rem 0 0 0.5rem"
+			activateButton.style.margin = "0rem 0 0 0.5rem"
 			activateButton.style.float  = "right"
 			detail.element.appendChild(activateButton)
 			
@@ -180,23 +191,18 @@
 			moveButton.addEventListener("mousedown", 
 										e => startMoveWindow(e, detail))
 			moveButton.src = "/icons/move.svg"
-			moveButton.style.margin = "-0.75rem 0 0 0.5rem"
+			moveButton.style.margin = "0rem 0 0 0.5rem"
 			moveButton.style.float  = "right"
 			detail.element.appendChild(moveButton)
 			
 			window.windows.push(detail)
 			document.body.appendChild(detail.element)
 			
-			var bounding = detail.element.getBoundingClientRect()
-			detail.width  = bounding.width  + "px"
-			detail.height = bounding.height + "px"
-			
-			restoreWindow(detail)
-			
+			updateWindowLocation(detail)
 			return detail
 		}
 		
-		window.addEventListener("mousemove", 
+		window.addEventListener("mousemove",
 									e => continueMoveWindow(e))
 		window.addEventListener("mouseup",
 									e => finishMoveWindow(e))
@@ -227,6 +233,8 @@
 				window.moving.element.style.top  = y + "px"
 				window.moving.element.style.left = x + "px"
 				event.preventDefault()
+				
+				updateWindowLocation(window.moving)
 			}
 		}
 		
@@ -250,9 +258,8 @@
 		function enlargeWindow(pane) {
 			pane.element.style.top    = "16px"
 			pane.element.style.left   = "16px"
-			pane.element.style.width  = "calc(100dvw - 1.2rem - 3rem)"
-			pane.element.style.height = "calc(100dvh - 1.2rem - 3rem)"
-			// pane.element.style.margin = "1rem"
+			pane.element.style.width  = "calc(100dvw - 1.2rem - 2rem)"
+			pane.element.style.height = "calc(100dvh - 1.2rem - 2rem)"
 		}
 		
 		function restoreWindow(pane) {
@@ -262,6 +269,20 @@
 			pane.element.style.height = pane.height
 		}
 		
+		function updateWindowLocation(pane) {
+			var bounding  = pane.element.getBoundingClientRect()
+			pane.top    = bounding.top    + "px"
+			pane.left   = bounding.left   + "px"
+			pane.width  = bounding.width  + "px"
+			pane.height = bounding.height + "px"
+		}
+		
+		function showWindowLocation(pane) {
+			console.log("top    " + pane.top)
+			console.log("left   " + pane.left)
+			console.log("width  " + pane.width)
+			console.log("height " + pane.height)
+		}
 		
 	</script>
 </html>
