@@ -32,46 +32,33 @@
 	<script src="/live.js"></script>
 	<script>
 
-		window.apps = [ ]
-		window.processNumber = 0
-		window.windows = [ ]
-		window.windowNumber = 0
-		
-		start()
-		
-		var photoViewer = startApp(photoViewer)
-		var empty = startApp(empty)
-		
-		async function photoViewer() {
-			
-			var location = "https://api.coinbase.com" +
-							"/v2/prices/xau-usd/spot"
-			var response = await fetch(location)
-			var text     = await response.text()
-			console.log(text)
-			
-			var viewer = createWindow("Photo Viewer")
-			
-			var image = document.createElement("img")
-			image.src = "/sample-photo.jpg"
-			image.style.display   = "block"
-			image.style.overflow  = "hidden"
-			image.style.width     = "100%"
+		// mouse click  --> pointerdown, mousedown
+		// finger touch --> pointerdown, mousedown, touchstart
+		// pen tap      --> pointerdown, mousedown, touchstart
 
-			viewer.element.appendChild(image)
-		}
-		
-		function empty() {
-			var main = createWindow("Sample")
-		}
-		
 		// mousedown     mousemove     mouseup
 		// touchstart    touchmove     touchend
 		// pointerdown   pointermove   pointerup
-
-		async function start() {
+		
+		var Screen = { }
+		
+		Screen.apps = [ ]
+		Screen.processNumber = 0
+		Screen.windows = [ ]
+		Screen.windowNumber = 0
+		
+		Screen.getSize = function() {
+			var result    = { }
+			result.width  = window.innerWidth
+			result.height = window.innerHeight
+			return result
+		}
+		
+		Screen.start = async function() {
+			
 			console.log("Starting Operating System")
 
+			/*
 			window.addEventListener("touchstart", e => {
 				console.log("touchstart")
 				console.log(e.touches)
@@ -81,12 +68,44 @@
 				console.log("pointerdown")
 				console.log(e)
 			})
+			
+			window.addEventListener("mousedown", e => {
+				console.log("mousedown")
+				console.log(e)
+			})
+			*/
+
+			/*
+			window.addEventListener("touchstart", e => {
+				console.log("touchstart")
+				console.log(e.touches)
+			})
+			window.addEventListener("touchmove", e => {
+				console.log("touchmove")
+				console.log(e.touches)
+			})
+			window.addEventListener("touchend", e => {
+				console.log("touchend")
+				console.log(e.touches)
+			})
+			*/
+
+			window.addEventListener("mousemove",
+						e => Screen.continueMouseMoveWindow(e))
+			window.addEventListener("mouseup",
+						e => Screen.finishMouseMoveWindow(e))
+
+			window.addEventListener("touchmove", 
+						e => Screen.continueFingerMoveWindow(e))
+			window.addEventListener("touchend", 
+						e => Screen.finishFingerMoveWindow(e))
+
 		}
 		
-		function closeApp(a) {
+		Screen.closeApp = function(a) {
 			var found = -1
-			for (var i = 0; i < window.apps.length; i++) {
-				if (a.identifier == window.apps[i].identifier) {
+			for (var i = 0; i < Screen.apps.length; i++) {
+				if (a.identifier == Screen.apps[i].identifier) {
 					found = i
 				}
 			}
@@ -95,23 +114,23 @@
 				a.resolve("EXIT_SUCCESS")
 				
 				// move app detail
-				for (var i = found; i < window.apps.length; i++) {
-					window.apps[i] = window.apps[i + 1]
+				for (var i = found; i < Screen.apps.length; i++) {
+					Screen.apps[i] = Screen.apps[i + 1]
 				}
 				
 				// delete the last element
-				window.apps.pop()
+				Screen.apps.pop()
 				
 				// TODO: remove all windows from this app
 			}
 		}
 		
-		function startApp(f) {
-			window.processNumber++
+		Screen.startApp = function(f) {
+			Screen.processNumber++
 			
 			var detail = { }
-			window.apps.push(detail)
-			detail.identifier = window.processNumber
+			Screen.apps.push(detail)
+			detail.identifier = Screen.processNumber
 			detail.promise = new Promise( function(resolve, reject) {
 				detail.resolve = resolve
 				detail.reject  = reject
@@ -121,93 +140,99 @@
 			return detail
 		}
 		
-		function getFrontWindow() {
+		Screen.getFrontWindow = function() {
 			var m = 0
-			for (var i = 0; i < window.windows.length; i++) {
-				if (m < window.windows[i].front) {
-					m = window.windows[i].front
+			for (var i = 0; i < Screen.windows.length; i++) {
+				if (m < Screen.windows[i].front) {
+					m = Screen.windows[i].front
 				}
 			}
 			return m
 		}
 		
-		function createWindow(text) {
-			window.windowNumber++
+		Screen.createWindow = function(text) {
+			Screen.windowNumber++
 			var detail = { }
 			detail.text = text
 			detail.maximize = true
-			detail.identifier = window.windowNumber
-			
-			detail.top    = 40 * window.windowNumber + "px"
-			detail.left   = 40 * window.windowNumber + "px"
-			detail.width  = "640px"
-			detail.height = "480px"
-
-			detail.front  = 1 + getFrontWindow()
+			detail.identifier = Screen.windowNumber
+			detail.front  = 1 + Screen.getFrontWindow()
 			
 			detail.element = document.createElement("section")
 			detail.element.classList.add("window")
 			
 			detail.element.style.position   = "absolute"
-			detail.element.style.background = "rgba(255, 255, 255, .85)"
+			// detail.element.style.background = "rgba(255, 255, 255, .05)"
+			detail.element.style.background = "none"
 			detail.element.style.borderRadius = "1rem"
 			detail.element.style.border = ".5rem solid rgba(0, 0, 0, .05)"
-			detail.element.style.boxShadow = "0 0 0.075rem #000"
+			detail.element.style.boxShadow = "0 0 .1rem #000"
 			detail.element.style.color     = "#333"
 			detail.element.style.display   = "block"
 			detail.element.style.overflow  = "auto"
 			
+			var size = Screen.getSize()
+			var y = (size.height - Screen.defaultHeight - 16) / 2
+			var x = (size.width  - Screen.defaultWidth  - 16) / 2
+			
+			detail.element.style.top    = y + "px"
+			detail.element.style.left   = x + "px"
+			detail.element.style.width  = Screen.defaultWidth  + "px"
+			detail.element.style.height = Screen.defaultHeight + "px"
+			
 			detail.element.style.zIndex = detail.front
-			detail.element.style.top    = detail.top
-			detail.element.style.left   = detail.left
-			detail.element.style.width  = detail.width
-			detail.element.style.height = detail.height
+			
+			var bar = document.createElement("section")
+			bar.style.background = "rgba(255, 255, 255, .85)"
+			bar.style.padding = ".5rem 0 .5rem .5rem"
+			bar.style.margin = "0"
+			bar.innerText = text
+			detail.element.appendChild(bar)
 			
 			var maximizeButton = document.createElement("img")
 			maximizeButton.addEventListener("click", 
-										e => enlargeWindow(detail))
+										e => Screen.enlargeWindow(detail))
 			maximizeButton.src = "/icons/up.svg"
-			maximizeButton.style.margin = "0rem 0 0 0.5rem"
+			maximizeButton.style.margin = "-0.2rem .5rem 0 0.5rem"
 			maximizeButton.style.float  = "right"
-			detail.element.appendChild(maximizeButton)
+			bar.appendChild(maximizeButton)
 			
 			var restoreButton = document.createElement("img")
 			restoreButton.addEventListener("click", 
-										e => restoreWindow(detail))
+										e => Screen.restoreWindow(detail))
 			restoreButton.src = "/icons/down.svg"
-			restoreButton.style.margin = "0rem 0 0 0.5rem"
+			restoreButton.style.margin = "-0.2rem 0 0 0.5rem"
 			restoreButton.style.float  = "right"
-			detail.element.appendChild(restoreButton)
+			bar.appendChild(restoreButton)
 		
 			var activateButton = document.createElement("img")
 			activateButton.addEventListener("click", 
-										e => activateWindow(detail))
+										e => Screen.activateWindow(detail))
 			activateButton.src = "/icons/check.svg"
-			activateButton.style.margin = "0rem 0 0 0.5rem"
+			activateButton.style.margin = "-0.2rem 0 0 0.5rem"
 			activateButton.style.float  = "right"
-			detail.element.appendChild(activateButton)
+			bar.appendChild(activateButton)
 			
 			var moveButton = document.createElement("img")
-			moveButton.addEventListener("mousedown", 
-										e => startMoveWindow(e, detail))
-			moveButton.src = "/icons/move.svg"
-			moveButton.style.margin = "0rem 0 0 0.5rem"
-			moveButton.style.float  = "right"
-			detail.element.appendChild(moveButton)
 			
-			window.windows.push(detail)
+			moveButton.addEventListener("mousedown", 
+								e => Screen.startMouseMoveWindow(e, detail))
+			
+			moveButton.addEventListener("touchstart", 
+								e => Screen.startFingerMoveWindow(e, detail))
+			
+			moveButton.src = "/icons/move.svg"
+			moveButton.style.margin = "-0.2rem 0 0 0.5rem"
+			moveButton.style.float  = "right"
+			bar.appendChild(moveButton)
+			
+			Screen.windows.push(detail)
 			document.body.appendChild(detail.element)
 			
-			updateWindowLocation(detail)
 			return detail
 		}
 		
-		window.addEventListener("mousemove",
-									e => continueMoveWindow(e))
-		window.addEventListener("mouseup",
-									e => finishMoveWindow(e))
-		
-		function startMoveWindow(event, pane) {
+		Screen.startMouseMoveWindow = function(event, pane) {
 			window.moving  = pane
 			window.movingX = event.clientX
 			window.movingY = event.clientY
@@ -219,13 +244,7 @@
 			event.preventDefault()
 		}
 		
-		function finishMoveWindow(event) {
-			window.moving = null
-			event.preventDefault()
-		}
-		
-		function continueMoveWindow(event) {
-			
+		Screen.continueMouseMoveWindow = function(event) {
 			if (window.moving == null) { }
 			if (window.moving != null) {
 				var x = (event.clientX - window.movingX + window.startX)
@@ -233,55 +252,123 @@
 				window.moving.element.style.top  = y + "px"
 				window.moving.element.style.left = x + "px"
 				event.preventDefault()
-				
-				updateWindowLocation(window.moving)
 			}
 		}
 		
+		Screen.finishMouseMoveWindow = function(event) {
+			if (window.moving == null) { }
+			if (window.moving != null) {
+				window.moving = null
+				event.preventDefault()
+			}
+		}
 		
-		// bring the given window to front
-		function activateWindow(pane) {
+		Screen.startFingerMoveWindow = function(event, pane) {
+			if (event.changedTouches.length == 0) return
+			window.moving = pane
+			window.movingX = event.changedTouches[0].screenX
+			window.movingY = event.changedTouches[0].screenY
+			
+			var bound = pane.element.getBoundingClientRect()
+			window.startX  = bound.x
+			window.startY  = bound.y
+			
+			event.preventDefault()
+		}
+		
+		Screen.continueFingerMoveWindow = function(event) {
+			if (event.changedTouches.length == 0) return
+			if (window.moving == null) { }
+			if (window.moving != null) {
+				var x = (event.changedTouches[0].screenX - 
+							window.movingX + window.startX)
+				var y = (event.changedTouches[0].screenY - 
+							window.movingY + window.startY)
+				window.moving.element.style.top  = y + "px"
+				window.moving.element.style.left = x + "px"
+				// event.preventDefault()
+			}
+		}
+		
+		Screen.finishFingerMoveWindow = function(event) {
+			if (window.moving == null) { }
+			if (window.moving != null) {
+				window.moving = null
+				event.preventDefault()
+			}
+		}
+		
+		Screen.activateWindow = function(pane) {
 			var found = -1
-			for (var i = 0; i < window.windows.length; i++) {
-				if (pane.identfier = window.windows[i].identifier) {
+			for (var i = 0; i < Screen.windows.length; i++) {
+				if (pane.identfier = Screen.windows[i].identifier) {
 					found = i
 				}
 			}
 			
 			if (found >= 0) {
-				pane.front = 1 + getFrontWindow()
+				pane.front = 1 + Screen.getFrontWindow()
 				pane.element.style.zIndex = pane.front
-				
 			}
 		}
 		
-		function enlargeWindow(pane) {
-			pane.element.style.top    = "16px"
-			pane.element.style.left   = "16px"
-			pane.element.style.width  = "calc(100dvw - 1.2rem - 2rem)"
-			pane.element.style.height = "calc(100dvh - 1.2rem - 2rem)"
+		Screen.enlargeWindow = function(pane) {
+			pane.element.style.top    = "1rem"
+			pane.element.style.left   = "1rem"
+			pane.element.style.width  = "calc(100dvw - 3rem)"
+			pane.element.style.height = "calc(100dvh - 3rem)"
 		}
 		
-		function restoreWindow(pane) {
-			pane.element.style.top    = pane.top
-			pane.element.style.left   = pane.left
-			pane.element.style.width  = pane.width
-			pane.element.style.height = pane.height
+		Screen.restoreWindow = function(pane) {
+			var size = Screen.getSize()
+			var y = (size.height - Screen.defaultHeight) / 2
+			var x = (size.width  - Screen.defaultWidth)  / 2
+
+			pane.element.style.top    = y + "px"
+			pane.element.style.left   = x + "px"
+			pane.element.style.width  = Screen.defaultWidth  + "px"
+			pane.element.style.height = Screen.defaultHeight + "px"
 		}
 		
-		function updateWindowLocation(pane) {
-			var bounding  = pane.element.getBoundingClientRect()
-			pane.top    = bounding.top    + "px"
-			pane.left   = bounding.left   + "px"
-			pane.width  = bounding.width  + "px"
-			pane.height = bounding.height + "px"
+		Screen.centerWindow = function(pane) {
+			var size = Screen.getSize()
+			var bound = pane.element.getBoundingClientRect()
+			
+			var x = (size.width - bound.width)  / 2
+
+			pane.element.style.left   = x + "px"
 		}
 		
-		function showWindowLocation(pane) {
-			console.log("top    " + pane.top)
-			console.log("left   " + pane.left)
-			console.log("width  " + pane.width)
-			console.log("height " + pane.height)
+		Screen.defaultWidth  = 640
+		Screen.defaultHeight = 480
+		
+		Screen.start()
+		
+		
+		var photoViewer = Screen.startApp(photoViewer)
+		var empty = Screen.startApp(empty)
+		
+		async function photoViewer() {
+			
+			var location = "https://api.coinbase.com" +
+							"/v2/prices/xau-usd/spot"
+			var response = await fetch(location)
+			var text     = await response.text()
+			console.log(text)
+			
+			var viewer = Screen.createWindow("Photo Viewer")
+			
+			var image = document.createElement("img")
+			image.src = "/sample-photo.jpg"
+			image.style.display  = "block"
+			image.style.overflow = "hidden"
+			image.style.width    = "100%"
+
+			viewer.element.appendChild(image)
+		}
+		
+		function empty() {
+			var main = Screen.createWindow("Sample")
 		}
 		
 	</script>
